@@ -1,32 +1,33 @@
-package ua.bellkross.android.newsapp.data;
+package ua.bellkross.android.newsapp;
 
 
+import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 
 public class News {
 
     private String mTitle;
     private String mSectionName;
-    private String mThumbnailUrl;
+    private Drawable mThumbnail;
     private String mNewsUrl;
     @Nullable
     private String mDate;
     @Nullable
     private String mAuthor;
 
-    public News(String title, String sectionName, String thumbnailUrl, String newsUrl, String date, String author) {
+    public News(String title, String sectionName, Drawable thumbnail, String newsUrl, String date, String author) {
         mTitle = title;
         mSectionName = sectionName;
-        mThumbnailUrl = thumbnailUrl;
+        mThumbnail = thumbnail;
         mNewsUrl = newsUrl;
         mDate = date;
         mAuthor = author;
     }
 
-    public News(String title, String sectionName, String thumbnailUrl, String newsUrl, String date) {
+    public News(String title, String sectionName, Drawable thumbnail, String newsUrl, String date) {
         mTitle = title;
         mSectionName = sectionName;
-        mThumbnailUrl = thumbnailUrl;
+        mThumbnail = thumbnail;
         mNewsUrl = newsUrl;
         mDate = date;
     }
@@ -47,12 +48,12 @@ public class News {
         mSectionName = sectionName;
     }
 
-    public String getThumbnailUrl() {
-        return mThumbnailUrl;
+    public Drawable getThumbnail() {
+        return mThumbnail;
     }
 
-    public void setThumbnailUrl(String thumbnailUrl) {
-        mThumbnailUrl = thumbnailUrl;
+    public void setThumbnail(Drawable thumbnail) {
+        mThumbnail = thumbnail;
     }
 
     @Nullable
@@ -78,7 +79,6 @@ public class News {
         return "News{" +
                 "mTitle='" + mTitle + '\'' +
                 ", mSectionName='" + mSectionName + '\'' +
-                ", mThumbnailUrl='" + mThumbnailUrl + '\'' +
                 ", mDate='" + mDate + '\'' +
                 ", mAuthor='" + mAuthor + '\'' +
                 '}';

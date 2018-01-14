@@ -3,15 +3,12 @@ package ua.bellkross.android.newsapp;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.view.View;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 
-import ua.bellkross.android.newsapp.data.News;
-
-public class NewsLoader extends AsyncTaskLoader<ArrayList<News>>{
+public class NewsLoader extends AsyncTaskLoader<ArrayList<News>> {
 
     private String mUrl;
     private ProgressBar mProgressBar;

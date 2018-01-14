@@ -1,12 +1,12 @@
 package ua.bellkross.android.newsapp;
 
 
+import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Loader;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,16 +16,12 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-import java.util.zip.Inflater;
 
-import ua.bellkross.android.newsapp.data.News;
-
-public class NewsFragment extends Fragment implements LoaderManager.LoaderCallbacks{
+public class NewsFragment extends Fragment implements LoaderManager.LoaderCallbacks<ArrayList<News>> {
 
     public static final String LOG_TAG = NewsFragment.class.getSimpleName();
+    private static final int NEWS_LOADER_ID = 0;
     public static String URL = "http://content.guardianapis.com/search?q=debates&" +
             "show-tags=contributor&show-fields=thumbnail&" +
             "api-key=57a35d7d-c2ae-4751-b3b3-3ba09c32f21d";
@@ -33,6 +29,7 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
     private RecyclerAdapter mAdapter;
     private ProgressBar mProgressBar;
     private TextView mEmptyView;
+    private NewsLoader mLoader;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,7 +43,17 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
                              @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_news, container, false);
 
+
         mRecyclerView = v.findViewById(R.id.news_recycler_view);
+        mProgressBar = v.findViewById(R.id.progress_bar);
+
+        mLoader = (NewsLoader) getLoaderManager().initLoader(NEWS_LOADER_ID, null, this);
+        mLoader.setUrl(URL);
+        mLoader.onForceLoad();
+
+        mAdapter = new RecyclerAdapter(new ArrayList<News>());
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mRecyclerView.setAdapter(mAdapter);
 
 
         return v;
@@ -57,18 +64,25 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
     }
 
     @Override
-    public Loader onCreateLoader(int id, Bundle args) {
+    public Loader<ArrayList<News>> onCreateLoader(int id, Bundle args) {
         return new NewsLoader(getActivity(), mProgressBar);
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object data) {
+    public void onLoadFinished(Loader<ArrayList<News>> loader, ArrayList<News> data) {
         mAdapter.getNews().clear();
+
+        if (data != null && !data.isEmpty()) {
+            mAdapter.getNews().addAll(data);
+        }
+        mAdapter.notifyDataSetChanged();
+
+        Log.d(LOG_TAG, "ITEM COUNT = " + String.valueOf(mAdapter.getItemCount()));
 
     }
 
     @Override
-    public void onLoaderReset(Loader loader) {
+    public void onLoaderReset(Loader<ArrayList<News>> loader) {
         mAdapter.getNews().clear();
     }
 
@@ -82,13 +96,20 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
 
         @Override
         public NewsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            View view = inflater.inflate(R.layout.list_item, parent, false);
 
-            return null;
+            return new NewsViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(NewsViewHolder holder, int position) {
-
+            News news = mNews.get(position);
+            holder.mImageViewThumbnail.setImageDrawable(news.getThumbnail());
+            holder.mTextViewTitle.setText(news.getTitle());
+            holder.mTextViewTag.setText(news.getSectionName());
+            holder.mTextViewTime.setText(news.getDate());
+            holder.mTextViewName.setText(news.getAuthor());
         }
 
         @Override
@@ -100,30 +121,24 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
             return mNews;
         }
 
-        public void setNews(ArrayList<News> news) {
-            mNews = news;
-        }
     }
 
-    private class NewsViewHolder extends RecyclerView.ViewHolder{
-
-        private News mNews;
-
+    private class NewsViewHolder extends RecyclerView.ViewHolder {
         private ImageView mImageViewThumbnail;
         private TextView mTextViewTitle;
         private TextView mTextViewTime;
         private TextView mTextViewName;
         private TextView mTextViewTag;
 
-        public NewsViewHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.list_item, parent, false));
-
+        public NewsViewHolder(View view) {
+            super(view);
             mImageViewThumbnail = itemView.findViewById(R.id.ivThumbnail);
             mTextViewTitle = itemView.findViewById(R.id.tvTitle);
             mTextViewTime = itemView.findViewById(R.id.tvTime);
             mTextViewName = itemView.findViewById(R.id.tvName);
             mTextViewTag = itemView.findViewById(R.id.tvTag);
         }
+
 
     }
 

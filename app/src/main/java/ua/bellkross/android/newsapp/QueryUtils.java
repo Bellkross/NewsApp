@@ -1,6 +1,7 @@
 package ua.bellkross.android.newsapp;
 
 
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -8,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,14 +19,22 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-import ua.bellkross.android.newsapp.data.News;
-
 public class QueryUtils {
 
     private static final String LOG_TAG = QueryUtils.class.getSimpleName();
     private static final String API_KEY = "57a35d7d-c2ae-4751-b3b3-3ba09c32f21d";
 
     private QueryUtils() {
+    }
+
+    public static Drawable getDrawableFromUrl(String url){
+        try {
+            InputStream is = (InputStream) new URL(url).getContent();
+            Drawable d = Drawable.createFromStream(is, "src name");
+            return d;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static ArrayList<News> fetchNewsData(String requestUrl){
@@ -90,6 +100,7 @@ public class QueryUtils {
             JSONObject newsObject;
 
             String title, sectionName, thumbnailUrl, newsUrl, date, author;
+            Drawable thumbnail;
 
             for (int i = 0; i < jsonNewsArray.length(); ++i) {
                 author = "";
@@ -105,11 +116,13 @@ public class QueryUtils {
 
                 newsObject = newsObject.getJSONObject("fields");
                 thumbnailUrl = newsObject.getString("thumbnail");
+                thumbnail = getDrawableFromUrl(thumbnailUrl);
+
                 newsObject = jsonNewsArray.getJSONObject(i);
 
                 if (newsObject.isNull("tags")) {
 
-                    news.add(new News(title, sectionName, thumbnailUrl, newsUrl, date));
+                    news.add(new News(title, sectionName, thumbnail, newsUrl, date));
 
                 } else {
 
@@ -129,7 +142,7 @@ public class QueryUtils {
                         if (++j < jsonNewsArray.length())
                             author += ',';
                     }
-                    news.add(new News(title, sectionName, thumbnailUrl, newsUrl, date, author));
+                    news.add(new News(title, sectionName, thumbnail, newsUrl, date, author));
                 }
                 jsonNewsArray = jsonResponse.getJSONArray("results");
             }

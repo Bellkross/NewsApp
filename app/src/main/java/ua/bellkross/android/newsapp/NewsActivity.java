@@ -1,8 +1,6 @@
 package ua.bellkross.android.newsapp;
 
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.app.Fragment;
 
 public class NewsActivity extends SingleFragmentActivity {
 
