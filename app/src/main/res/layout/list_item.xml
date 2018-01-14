@@ -48,7 +48,7 @@
         android:textColor="?android:textColorHint"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toBottomOf="@+id/tvTitle"
-        tools:text="14 hours ago by " />
+        tools:text="14/01/2018 by " />
 
     <TextView
         android:id="@+id/tvName"
@@ -74,5 +74,5 @@
         android:textColor="@color/colorTagText"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toBottomOf="@+id/tvTime"
-        tools:text="sectionId"/>
+        tools:text="sectionName"/>
 </android.support.constraint.ConstraintLayout>
