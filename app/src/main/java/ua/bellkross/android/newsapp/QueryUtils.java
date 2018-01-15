@@ -1,6 +1,8 @@
 package ua.bellkross.android.newsapp;
 
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -17,8 +19,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-import ua.bellkross.android.newsapp.data.News;
-
 public class QueryUtils {
 
     private static final String LOG_TAG = QueryUtils.class.getSimpleName();
@@ -27,13 +27,13 @@ public class QueryUtils {
     private QueryUtils() {
     }
 
-    public static ArrayList<News> fetchNewsData(String requestUrl){
+    public static ArrayList<News> fetchNewsData(String requestUrl) {
         URL url = stringToUrl(requestUrl);
 
         String jsonResponse = null;
         try {
             jsonResponse = makeHttpRequest(url);
-        } catch (IOException e){
+        } catch (IOException e) {
             Log.e(LOG_TAG, "Error closing input stream", e);
         }
 
@@ -90,6 +90,7 @@ public class QueryUtils {
             JSONObject newsObject;
 
             String title, sectionName, thumbnailUrl, newsUrl, date, author;
+            Bitmap thumbnail;
 
             for (int i = 0; i < jsonNewsArray.length(); ++i) {
                 author = "";
@@ -101,36 +102,17 @@ public class QueryUtils {
                 title = newsObject.getString("webTitle");
                 sectionName = newsObject.getString("sectionName");
                 date = newsObject.getString("webPublicationDate");
+                date = date.substring(0, date.indexOf('T'));
+
                 newsUrl = newsObject.getString("webUrl");
 
                 newsObject = newsObject.getJSONObject("fields");
                 thumbnailUrl = newsObject.getString("thumbnail");
+                thumbnail = getBitmapFromURL(thumbnailUrl);
                 newsObject = jsonNewsArray.getJSONObject(i);
 
-                if (newsObject.isNull("tags")) {
+                news.add(new News(title, sectionName, newsUrl, thumbnail, date));
 
-                    news.add(new News(title, sectionName, thumbnailUrl, newsUrl, date));
-
-                } else {
-
-                    jsonNewsArray = newsObject.getJSONArray("tags");
-
-                    for (int j = 0; j < jsonNewsArray.length(); ) {
-                        newsObject = jsonNewsArray.getJSONObject(j);
-                        if (!newsObject.isNull("firstName")) {
-                            author += newsObject.getString("firstName");
-                            if (!newsObject.isNull("lastName")) {
-                                author += (author.equals("") ? "" : " ") + newsObject.getString("lastName");
-                            }
-                        } else if (!newsObject.isNull("lastName")) {
-                            author += newsObject.getString("lastName");
-                        }
-
-                        if (++j < jsonNewsArray.length())
-                            author += ',';
-                    }
-                    news.add(new News(title, sectionName, thumbnailUrl, newsUrl, date, author));
-                }
                 jsonNewsArray = jsonResponse.getJSONArray("results");
             }
 
@@ -140,6 +122,21 @@ public class QueryUtils {
         }
 
         return news;
+    }
+
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
+        }
     }
 
     private static String streamToString(InputStream inputStream) throws IOException {

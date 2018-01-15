@@ -1,33 +1,27 @@
-package ua.bellkross.android.newsapp.data;
+package ua.bellkross.android.newsapp;
 
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 public class News {
 
     private String mTitle;
     private String mSectionName;
-    private String mThumbnailUrl;
     private String mNewsUrl;
+    private Bitmap mThumbnailBitmap;
     @Nullable
     private String mDate;
-    @Nullable
-    private String mAuthor;
 
-    public News(String title, String sectionName, String thumbnailUrl, String newsUrl, String date, String author) {
+    public News(String title, String sectionName, String newsUrl, Bitmap thumbnailBitmap, String date) {
         mTitle = title;
         mSectionName = sectionName;
-        mThumbnailUrl = thumbnailUrl;
         mNewsUrl = newsUrl;
-        mDate = date;
-        mAuthor = author;
-    }
-
-    public News(String title, String sectionName, String thumbnailUrl, String newsUrl, String date) {
-        mTitle = title;
-        mSectionName = sectionName;
-        mThumbnailUrl = thumbnailUrl;
-        mNewsUrl = newsUrl;
+        mThumbnailBitmap = thumbnailBitmap;
         mDate = date;
     }
 
@@ -47,12 +41,20 @@ public class News {
         mSectionName = sectionName;
     }
 
-    public String getThumbnailUrl() {
-        return mThumbnailUrl;
+    public String getNewsUrl() {
+        return mNewsUrl;
     }
 
-    public void setThumbnailUrl(String thumbnailUrl) {
-        mThumbnailUrl = thumbnailUrl;
+    public void setNewsUrl(String newsUrl) {
+        mNewsUrl = newsUrl;
+    }
+
+    public Bitmap getThumbnailBitmap() {
+        return mThumbnailBitmap;
+    }
+
+    public void setThumbnailBitmap(Bitmap thumbnailBitmap) {
+        mThumbnailBitmap = thumbnailBitmap;
     }
 
     @Nullable
@@ -64,23 +66,14 @@ public class News {
         mDate = date;
     }
 
-    @Nullable
-    public String getAuthor() {
-        return mAuthor;
-    }
-
-    public void setAuthor(@Nullable String author) {
-        mAuthor = author;
-    }
-
     @Override
     public String toString() {
         return "News{" +
                 "mTitle='" + mTitle + '\'' +
                 ", mSectionName='" + mSectionName + '\'' +
-                ", mThumbnailUrl='" + mThumbnailUrl + '\'' +
+                ", mNewsUrl='" + mNewsUrl + '\'' +
+                ", mThumbnailBitmap=" + mThumbnailBitmap +
                 ", mDate='" + mDate + '\'' +
-                ", mAuthor='" + mAuthor + '\'' +
                 '}';
     }
 }

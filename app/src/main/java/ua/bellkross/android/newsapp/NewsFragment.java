@@ -2,11 +2,17 @@ package ua.bellkross.android.newsapp;
 
 
 import android.app.LoaderManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
-import android.os.AsyncTask;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,28 +22,27 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-import java.util.zip.Inflater;
 
-import ua.bellkross.android.newsapp.data.News;
-
-public class NewsFragment extends Fragment implements LoaderManager.LoaderCallbacks{
+public class NewsFragment extends Fragment implements LoaderManager.LoaderCallbacks<ArrayList<News>> {
 
     public static final String LOG_TAG = NewsFragment.class.getSimpleName();
     public static String URL = "http://content.guardianapis.com/search?q=debates&" +
             "show-tags=contributor&show-fields=thumbnail&" +
             "api-key=57a35d7d-c2ae-4751-b3b3-3ba09c32f21d";
+    private static final int NEWS_LOADER_ID = 0;
     private RecyclerView mRecyclerView;
     private RecyclerAdapter mAdapter;
     private ProgressBar mProgressBar;
     private TextView mEmptyView;
+    private NewsLoader mLoader;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setRetainInstance(true);
+        setRetainInstance(true);
+        Log.d(LOG_TAG, "onCreate");
+
     }
 
     @Nullable
@@ -47,7 +52,17 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
         View v = inflater.inflate(R.layout.fragment_news, container, false);
 
         mRecyclerView = v.findViewById(R.id.news_recycler_view);
+        mAdapter = new RecyclerAdapter(new ArrayList<News>());
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mEmptyView = v.findViewById(R.id.empty_view);
+        mProgressBar = v.findViewById(R.id.progress_bar);
 
+        Log.d(LOG_TAG, "onCreateView");
+        mLoader = (NewsLoader) getActivity().
+                getLoaderManager().initLoader(NEWS_LOADER_ID, null, this);
+        mLoader.setUrl(URL);
+        mLoader.forceLoad();
 
         return v;
     }
@@ -58,18 +73,44 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
+        Log.d(LOG_TAG, "onCreateLoader");
         return new NewsLoader(getActivity(), mProgressBar);
     }
 
     @Override
-    public void onLoadFinished(Loader loader, Object data) {
+    public void onLoadFinished(Loader<ArrayList<News>> loader, ArrayList<News> data) {
+        Log.d(LOG_TAG, "onLoadFinished");
+
         mAdapter.getNews().clear();
 
+        if (data != null && !data.isEmpty()) {
+            mAdapter.getNews().addAll(data);
+            mAdapter.notifyDataSetChanged();
+        } else {
+            ConnectivityManager cm =
+                    (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+            boolean isConnected = activeNetwork != null &&
+                    activeNetwork.isConnectedOrConnecting();
+
+            if (isConnected) {
+                mEmptyView.setText(R.string.no_news);
+            } else {
+                mEmptyView.setText(R.string.no_internet);
+            }
+            mEmptyView.setVisibility(View.VISIBLE);
+            return;
+        }
+        mEmptyView.setVisibility(View.GONE);
     }
+
 
     @Override
     public void onLoaderReset(Loader loader) {
         mAdapter.getNews().clear();
+        mAdapter.notifyDataSetChanged();
     }
 
     private class RecyclerAdapter extends RecyclerView.Adapter<NewsViewHolder> {
@@ -82,13 +123,20 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
 
         @Override
         public NewsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-            return null;
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            View view = inflater.inflate(R.layout.list_item, parent, false);
+            return new NewsViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(NewsViewHolder holder, int position) {
-
+            News news = mNews.get(position);
+            holder.mImageViewThumbnail.
+                    setImageDrawable(new BitmapDrawable(getResources(), news.getThumbnailBitmap()));
+            holder.mTextViewTitle.setText(news.getTitle());
+            holder.mTextViewSectionName.setText(news.getSectionName());
+            holder.mTextViewDate.setText(news.getDate());
+            holder.setListener(news);
         }
 
         @Override
@@ -105,24 +153,31 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
         }
     }
 
-    private class NewsViewHolder extends RecyclerView.ViewHolder{
-
-        private News mNews;
-
+    private class NewsViewHolder extends RecyclerView.ViewHolder {
         private ImageView mImageViewThumbnail;
         private TextView mTextViewTitle;
-        private TextView mTextViewTime;
-        private TextView mTextViewName;
-        private TextView mTextViewTag;
+        private TextView mTextViewDate;
+        private TextView mTextViewSectionName;
 
-        public NewsViewHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.list_item, parent, false));
-
+        public NewsViewHolder(View view) {
+            super(view);
             mImageViewThumbnail = itemView.findViewById(R.id.ivThumbnail);
             mTextViewTitle = itemView.findViewById(R.id.tvTitle);
-            mTextViewTime = itemView.findViewById(R.id.tvTime);
-            mTextViewName = itemView.findViewById(R.id.tvName);
-            mTextViewTag = itemView.findViewById(R.id.tvTag);
+            mTextViewDate = itemView.findViewById(R.id.tvDate);
+            mTextViewSectionName = itemView.findViewById(R.id.tvSectionName);
+        }
+
+        public void setListener(final News news) {
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Uri newsURI = Uri.parse(news.getNewsUrl());
+
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW, newsURI);
+
+                    startActivity(webIntent);
+                }
+            });
         }
 
     }
