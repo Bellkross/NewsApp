@@ -18,34 +18,16 @@ public class NewsLoader extends AsyncTaskLoader<ArrayList<News>>{
 
     public NewsLoader(Context context, ProgressBar progressBar) {
         super(context);
-        Log.d(LOG_TAG, "NewsLoader");
         mProgressBar = progressBar;
     }
 
     @Override
     public ArrayList<News> loadInBackground() {
-        Log.d(LOG_TAG, "loadInBackground");
+        mProgressBar.setVisibility(View.VISIBLE);
 
         ArrayList<News> news = QueryUtils.fetchNewsData(mUrl);
         return news;
     }
-
-    @Override
-    protected void onForceLoad() {
-        Log.d(LOG_TAG, "onForceLoad");
-
-        mProgressBar.setVisibility(View.VISIBLE);
-        super.onForceLoad();
-    }
-
-    @Override
-    protected boolean onCancelLoad() {
-        Log.d(LOG_TAG, "onCancelLoad");
-
-        mProgressBar.setVisibility(View.GONE);
-        return super.onCancelLoad();
-    }
-
 
     public String getUrl() {
         return mUrl;

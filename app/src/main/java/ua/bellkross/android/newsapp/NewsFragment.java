@@ -41,7 +41,6 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        Log.d(LOG_TAG, "onCreate");
 
     }
 
@@ -51,20 +50,29 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
                              @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_news, container, false);
 
+        mProgressBar = v.findViewById(R.id.progress_bar);
         mRecyclerView = v.findViewById(R.id.news_recycler_view);
         mAdapter = new RecyclerAdapter(new ArrayList<News>());
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEmptyView = v.findViewById(R.id.empty_view);
-        mProgressBar = v.findViewById(R.id.progress_bar);
 
-        Log.d(LOG_TAG, "onCreateView");
         mLoader = (NewsLoader) getActivity().
                 getLoaderManager().initLoader(NEWS_LOADER_ID, null, this);
         mLoader.setUrl(URL);
+        return v;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
         mLoader.forceLoad();
 
-        return v;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
     }
 
     public static Fragment newInstance() {
@@ -73,20 +81,19 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        Log.d(LOG_TAG, "onCreateLoader");
         return new NewsLoader(getActivity(), mProgressBar);
     }
 
     @Override
     public void onLoadFinished(Loader<ArrayList<News>> loader, ArrayList<News> data) {
-        Log.d(LOG_TAG, "onLoadFinished");
-
         mAdapter.getNews().clear();
 
         if (data != null && !data.isEmpty()) {
             mAdapter.getNews().addAll(data);
             mAdapter.notifyDataSetChanged();
         } else {
+            mProgressBar.setVisibility(View.GONE);
+
             ConnectivityManager cm =
                     (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -103,6 +110,7 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
             mEmptyView.setVisibility(View.VISIBLE);
             return;
         }
+        mProgressBar.setVisibility(View.GONE);
         mEmptyView.setVisibility(View.GONE);
     }
 
