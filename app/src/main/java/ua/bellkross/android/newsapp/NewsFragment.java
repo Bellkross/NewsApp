@@ -16,31 +16,35 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.SearchView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
 public class NewsFragment extends Fragment implements LoaderManager.LoaderCallbacks<ArrayList<News>> {
 
-    public static final String LOG_TAG = NewsFragment.class.getSimpleName();
-    public static String URL = "http://content.guardianapis.com/search?q=debates&" +
-            "show-tags=contributor&show-fields=thumbnail&" +
-            "api-key=57a35d7d-c2ae-4751-b3b3-3ba09c32f21d";
+    public static final String TAG = NewsFragment.class.getSimpleName();
+    private static final String BASIC_URL = "http://content.guardianapis.com/search?q=";
+    public String mUrl = "";
     private static final int NEWS_LOADER_ID = 0;
     private RecyclerView mRecyclerView;
     private RecyclerAdapter mAdapter;
     private ProgressBar mProgressBar;
     private TextView mEmptyView;
     private NewsLoader mLoader;
+    private SearchView mSearchView;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
 
     }
 
@@ -56,10 +60,11 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mEmptyView = v.findViewById(R.id.empty_view);
+        mEmptyView.setVisibility(View.GONE);
 
         mLoader = (NewsLoader) getActivity().
                 getLoaderManager().initLoader(NEWS_LOADER_ID, null, this);
-        mLoader.setUrl(URL);
+        mLoader.setUrl(mUrl);
         return v;
     }
 
@@ -67,6 +72,33 @@ public class NewsFragment extends Fragment implements LoaderManager.LoaderCallba
     public void onStart() {
         super.onStart();
         mLoader.forceLoad();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_news, menu);
+
+        Log.d(TAG, "onCreateOptionsMenu: ");
+
+        mSearchView = (SearchView) menu.findItem(R.id.app_bar_search).getActionView();
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                mUrl = BASIC_URL + query;
+                mUrl += "&show-fields=thumbnail";
+                mUrl += "&api-key=57a35d7d-c2ae-4751-b3b3-3ba09c32f21d";
+
+                mLoader.setUrl(mUrl);
+                mLoader.forceLoad();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
 
     }
 
